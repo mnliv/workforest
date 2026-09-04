@@ -13,6 +13,10 @@ export interface WorktreeState {
   task: string | null;
 }
 
+export interface WorktreeStateWithStale extends WorktreeState {
+  stale: boolean;
+}
+
 export interface WorkforestState {
   version: number;
   worktrees: WorktreeState[];
@@ -22,10 +26,4 @@ export interface WorkforestConfig {
   baseDir: string;
   defaultBaseBranch: string;
   idleTTL: string;
-}
-
-export interface CommandOutput {
-  path?: string;
-  state?: WorkforestState;
-  error?: string;
 }

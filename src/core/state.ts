@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getGitCommonDir } from '../utils/git';
 import { withLock } from '../utils/lock';
-import { WorkforestState, WorktreeState } from '../types';
+import { WorkforestState } from '../types';
 
 const STATE_FILE_NAME = 'state.json';
 
@@ -30,22 +30,6 @@ export async function readState(): Promise<WorkforestState> {
 
 async function writeStateInternal(state: WorkforestState, statePath: string): Promise<void> {
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
-}
-
-export async function transaction<T>(action: (state: WorkforestState, statePath: string) => Promise<T>): Promise<T> {
-  const statePath = await getStatePath();
-  const lockPath = statePath + '.lock';
-  
-  return await withLock(lockPath, async () => {
-    const state = await readState();
-    const result = await action(state, statePath);
-    // We assume action modifies 'state' object in place or we write it back.
-    // To be safe, let's assume the user must call writeStateInternal if they want to persist changes.
-    // Wait, that's not clean. Let's make transaction return the new state or just perform the action.
-    // Better: transaction accepts a function that receives (state) and returns Promise<void>
-    // and it handles reading and writing.
-    return result;
-  });
 }
 
 export async function runTransaction(action: (state: WorkforestState) => Promise<void>): Promise<void> {

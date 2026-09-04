@@ -8,7 +8,7 @@ export async function releaseCommand(program: Command) {
   program
     .command('release <target>')
     .description('Release a worktree (mark as idle)')
-    .option('--reset', 'Reset the worktree to pristine state')
+    .option('--reset', 'Reset the worktree to a pristine state')
     .option('--owner <id>', 'Release only if owner matches')
     .action(async (target, options) => {
       let found = false;
@@ -54,6 +54,7 @@ export async function releaseCommand(program: Command) {
       }
 
       if (!found) {
+        // This should not be reachable because errorMsg would have been set
         console.error(`Error: Worktree not found: ${target}`);
         process.exit(1);
       }
