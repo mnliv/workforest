@@ -3,13 +3,15 @@ import { runTransaction, readState } from '../core/state';
 import { runGit } from '../utils/git';
 import * as fs from 'fs';
 import * as path from 'path';
+import { loadConfig } from '../core/config';
 
 export async function pruneCommand(program: Command) {
   program
     .command('prune')
     .description('Reconcile state with actual git worktrees')
     .action(async () => {
-      await runTransaction(async (state) => {
+  const config = loadConfig();
+  await runTransaction(async (state) => {
         // 1. Get actual git worktrees via porcelain
         const result = runGit(['worktree', 'list', '--porcelain']);
         const lines = result.stdout!.split('\n');
@@ -47,7 +49,7 @@ export async function pruneCommand(program: Command) {
               id: `import-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
               path: worktreePath,
               branch: branch,
-              baseBranch: 'main', // we don't know for sure
+              baseBranch: branch !== 'unknown' ? branch : config.defaultBaseBranch,
               status: 'idle',
               owner: null,
               pid: null,

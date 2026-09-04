@@ -10,7 +10,7 @@ export async function cleanCommand(program: Command) {
     .command('clean')
     .description('Clean up worktrees')
     .option('--idle', 'Only idle worktrees')
-    .option('--all', 'All worktrees (requires --force)')
+.option('--all', 'All worktrees (requires --force)')
     .option('--older-than <duration>', 'Worktrees older than duration (e.g. 2h, 30m)')
     .option('--dry-run', 'Don\'t actually remove them')
     .option('--force', 'Required for --all')
@@ -34,17 +34,8 @@ export async function cleanCommand(program: Command) {
 
           if (options.all) {
             shouldRemove = true;
-          } else {
-            if (options.idle) {
-              if (w.status === 'idle') {
-                shouldRemove = true;
-              }
-            } else {
-              // Default: remove idle worktrees
-              if (w.status === 'idle') {
-                shouldRemove = true;
-              }
-            }
+          } else if (w.status === 'idle') {
+            shouldRemove = true;
           }
 
           if (shouldRemove && thresholdMs > 0) {
