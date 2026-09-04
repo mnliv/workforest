@@ -37,6 +37,7 @@ export async function withLock<T>(lockPath: string, action: () => Promise<T> | T
             } catch (e) {
               // If someone else removed it, that's fine.
             }
+            await new Promise(resolve => setTimeout(resolve, 200));
             continue;
           }
         } catch (e) {

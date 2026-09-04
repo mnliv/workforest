@@ -12,10 +12,11 @@ export function createTempGitRepo(): string {
   return repoDir;
 }
 
-export function runCli(args: string[], cwd: string) {
+export function runCli(args: string | string[], cwd: string) {
   // Get absolute path to cli.js relative to this file
   const cliPath = path.resolve(path.join(__dirname, '../../dist/cli.js'));
-  const cmd = `node "${cliPath}" ${args}`;
+  const argsString = Array.isArray(args) ? args.join(' ') : args;
+  const cmd = `node "${cliPath}" ${argsString}`;
   try {
     const stdout = execSync(cmd, { cwd: cwd, encoding: 'utf-8' });
     return { stdout, error: null, status: 0 };
