@@ -1,0 +1,29 @@
+{
+  "name": "workforest",
+  "version": "1.0.0",
+  "description": "A CLI to manage reusable git worktrees for parallel coding sessions",
+  "main": "dist/cli.js",
+  "bin": {
+    "workforest": "dist/cli.js",
+    "wf": "dist/cli.js"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

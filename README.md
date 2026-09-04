@@ -1,0 +1,117 @@
+# Workforest
+
+`workforest` (or `wf`) is a CLI tool designed to manage reusable git worktrees for parallel coding sessions. It helps prevent multiple coding-agent sessions from colliding by managing worktrees and tracking which ones are idle or in-use.
+
+## Installation
+
+```bash
+npm install -g workforest
+```
+
+## Lifecycle
+
+The typical lifecycle of a worktree is:
+1. **Acquire**: Use `workforest acquire` to get a worktree. It will either reuse an idle one or create a new one.
+2. **Work**: Use the worktree for your task.
+3. **Release**: Use `workforest release` to mark it as idle and make it available for others. Optionally use `--reset` to leave it in a clean state.
+
+## Commands
+
+### `init`
+Initializes the `workforest.config.json` in the main repository root.
+```bash
+workforest init
+workforest init --base-dir ../my-worktrees --default-base main
+workforest init --force
+```
+
+### `acquire`
+Acquire a worktree. It tries to reuse an idle worktree (preferring the one on the requested branch, otherwise the least recently used). If no idle worktree is available, it creates a new one.
+```bash
+# Acquire an idle worktree for a task
+workforest acquire --task my-task
+
+# Acquire a worktree on a specific branch
+workforest acquire --branch feature/new-feature
+
+# Acquire and output full state as JSON
+workforest acquire --json
+```
+
+### `release`
+Marks a worktree as idle, making it available for reuse.
+```bash
+# Release by path or ID
+workforest release <path_or_id>
+
+# Reset the worktree to a pristine state (removes uncommitted changes and untracked files)
+workforest release <path_or_id> --reset
+
+# Release only if you are the owner
+workforest release <path_or_id> --owner my-id
+```
+
+### `list`
+Lists all managed worktrees.
+```bash
+workforest list
+workforest list --json
+workforest list --status idle
+workforest list --status in-use
+```
+
+### `status`
+Shows detailed information for a specific worktree.
+```bash
+workforest status <path_or_id>
+workforest status <path_or_id> --json
+```
+
+### `clean`
+Removes worktrees.
+```bash
+# Remove all idle worktrees
+workforest clean
+
+# Remove idle worktrees older than 2 hours
+workforest clean --older-than 2h
+
+# Remove all worktrees (including in-use ones, REQUIRES --force)
+workforest clean --all --force
+```
+
+### `prune`
+Reconciles the state with the actual git worktrees on disk. Removes entries from state for worktrees that no longer exist.
+```bash
+workforest prune
+```
+
+## Configuration
+
+A `workforest.config.json` file in the main repository root:
+
+```json
+{
+  "baseDir": "../my-worktrees",
+  "defaultBaseBranch": "main",
+  "idleTTL": "24h"
+}
+```
+
+- `baseDir`: The directory where worktrees are created. Defaults to `../<repo-name>-worktrees` relative to the repo root.
+- `defaultBaseBranch`: The branch to use when creating new worktrees. Defaults to `main`.
+- `idleTTL`: The duration after which an idle worktree is considered old (not used for `clean --older-than`). Defaults to `24h`.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | General/Runtime Error |
+| 2 | Usage Error (bad args/missing required) |
+| 3 | Lock Acquisition Timeout |
+
+## Windows Caveats
+- The tool uses Node.js's `fs.mkdirSync` for atomic locking, which works on Windows.
+- Git commands are executed using `spawnSync` for cross-platform compatibility.
+- Worktree paths should be handled carefully if they contain special characters.
