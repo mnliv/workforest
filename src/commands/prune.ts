@@ -10,8 +10,8 @@ export async function pruneCommand(program: Command) {
     .command('prune')
     .description('Reconcile state with actual git worktrees')
     .action(async () => {
-    const config = loadConfig();
-    await runTransaction(async (state) => {
+      const config = loadConfig();
+      await runTransaction(async (state) => {
         // 1. Get actual git worktrees via porcelain
         const result = runGit(['worktree', 'list', '--porcelain']);
         const lines = result.stdout!.split('\n');
