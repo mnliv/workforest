@@ -9,8 +9,7 @@ export async function cleanCommand(program: Command) {
   program
     .command('clean')
     .description('Clean up worktrees')
-    .option('--idle', 'Only idle worktrees')
-.option('--all', 'All worktrees (requires --force)')
+    .option('--all', 'All worktrees (requires --force)')
     .option('--older-than <duration>', 'Worktrees older than duration (e.g. 2h, 30m)')
     .option('--dry-run', 'Don\'t actually remove them')
     .option('--force', 'Required for --all')
