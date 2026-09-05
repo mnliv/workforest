@@ -148,6 +148,11 @@ A `workforest.config.json` file in the main repository root:
 - Git commands are executed using `spawnSync` for cross-platform compatibility.
 - Worktree paths should be handled carefully if they contain special characters.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). `main` is protected — changes land
+through a reviewed pull request, and only the maintainer can merge one.
+
 ## License
 
 MIT © Minh Nhan
