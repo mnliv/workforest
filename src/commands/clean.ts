@@ -9,13 +9,13 @@ export async function cleanCommand(program: Command) {
   program
     .command('clean')
     .description('Clean up worktrees')
-    .option('--all', 'All worktrees (requires --force)')
+    .option('--all', 'All worktrees, including in-use ones (requires --force)')
     .option('--older-than <duration>', 'Worktrees older than duration (e.g. 2h, 30m)')
-    .option('--dry-run', 'Don\'t actually remove them')
-    .option('--force', 'Required for --all')
+    .option('--dry-run', 'Don\'t actually remove them; just show what would be removed')
+    .option('--force', 'Required to actually remove anything (not needed with --dry-run)')
     .action(async (options) => {
-      if (options.all && !options.force) {
-        console.error('Error: --all requires --force to prevent accidental deletion of in-use worktrees.');
+      if (!options.dryRun && !options.force) {
+        console.error('Error: --force is required to remove worktrees. Use --dry-run to preview without it.');
         process.exit(2);
       }
 
@@ -59,7 +59,10 @@ export async function cleanCommand(program: Command) {
         if (!options.dryRun) {
           for (const item of toRemove) {
             try {
-              runGit(['worktree', 'remove', '--force', item.path]);
+              // Deliberately not passing --force to git here: a worktree with
+              // real uncommitted changes should make git refuse and leave it
+              // alone, not get silently wiped just because it was idle.
+              runGit(['worktree', 'remove', item.path]);
               runGit(['worktree', 'prune']);
               removedIds.add(item.id);
             } catch (e: any) {

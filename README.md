@@ -89,15 +89,22 @@ workforest status <path_or_id> --json
 ```
 
 ### `clean`
-Removes worktrees.
+Removes worktrees. `--force` is required to actually remove anything (bare
+`workforest clean` refuses and does nothing); `--dry-run` previews without
+needing `--force`. A worktree with real uncommitted or untracked changes is
+left alone even with `--force` — git itself refuses the removal rather than
+silently discarding that work.
 ```bash
+# Preview what would be removed
+workforest clean --dry-run
+
 # Remove all idle worktrees
-workforest clean
+workforest clean --force
 
 # Remove idle worktrees older than 2 hours
-workforest clean --older-than 2h
+workforest clean --older-than 2h --force
 
-# Remove all worktrees (including in-use ones, REQUIRES --force)
+# Remove all worktrees (including in-use ones, still REQUIRES --force)
 workforest clean --all --force
 ```
 
