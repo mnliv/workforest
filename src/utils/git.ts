@@ -46,12 +46,3 @@ export function getRepoRoot(): string {
 export function getMainWorktreePath(): string {
   return path.resolve(path.dirname(getGitCommonDir()));
 }
-
-export function isPidAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (e: any) {
-    return e.code === 'EPERM';
-  }
-}

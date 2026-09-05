@@ -1,7 +1,5 @@
 import { Command } from 'commander';
 import { readState } from '../core/state';
-import { isPidAlive } from '../utils/git';
-import { WorktreeState, WorktreeStateWithStale } from '../types';
 
 export async function listCommand(program: Command) {
   program
@@ -17,14 +15,8 @@ export async function listCommand(program: Command) {
         worktrees = worktrees.filter(w => w.status === options.status);
       }
 
-      // Add stale information (computed at read time)
-      const worktreesWithStale = worktrees.map(w => {
-        const stale = w.status === 'in-use' && w.pid !== null && !isPidAlive(w.pid);
-        return { ...w, stale } as WorktreeStateWithStale;
-      });
-
       if (options.json) {
-        console.log(JSON.stringify(worktreesWithStale, null, 2));
+        console.log(JSON.stringify(worktrees, null, 2));
       } else {
         if (worktrees.length === 0) {
           console.log('No worktrees found.');
@@ -49,9 +41,7 @@ export async function listCommand(program: Command) {
         console.log(header);
         console.log('-'.repeat(header.length));
 
-        for (const w of worktreesWithStale) {
-          const statusStr = w.stale ? 'in-use (STALE)' : w.status;
-          
+        for (const w of worktrees) {
           const pathCol = w.path.length > colWidths.path - 3
             ? w.path.substring(0, colWidths.path - 3) + '...'
             : w.path;
@@ -59,7 +49,7 @@ export async function listCommand(program: Command) {
           const row = [
             pathCol.padEnd(colWidths.path),
             w.branch.padEnd(colWidths.branch),
-            statusStr.padEnd(colWidths.status),
+            w.status.padEnd(colWidths.status),
             (w.owner || '-').padEnd(colWidths.owner),
             w.lastUsedAt.padEnd(colWidths.lastUsed)
           ].join(' ');

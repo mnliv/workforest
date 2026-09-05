@@ -13,10 +13,6 @@ export interface WorktreeState {
   task: string | null;
 }
 
-export interface WorktreeStateWithStale extends WorktreeState {
-  stale: boolean;
-}
-
 export interface WorkforestState {
   version: number;
   worktrees: WorktreeState[];
