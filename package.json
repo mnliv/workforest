@@ -8,10 +8,14 @@
     "wf": "dist/cli.js"
   },
   "type": "commonjs",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "commander": "^11.0.0",
