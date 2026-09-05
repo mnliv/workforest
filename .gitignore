@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 *.log
+.DS_Store
 
 # Ad-hoc per-task worktree directories created alongside the repo root
 wt-*/

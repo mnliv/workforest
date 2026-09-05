@@ -1,7 +1,26 @@
 {
-  "name": "workforest",
+  "name": "@mnliv/workforest",
   "version": "1.0.0",
   "description": "A CLI to manage reusable git worktrees for parallel coding sessions",
+  "keywords": [
+    "cli",
+    "git",
+    "worktree",
+    "git-worktree",
+    "parallel",
+    "coding-agent",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/mnliv/workforest#readme",
+  "bugs": {
+    "url": "https://github.com/mnliv/workforest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mnliv/workforest.git"
+  },
+  "license": "MIT",
+  "author": "Minh Nhan",
   "main": "dist/cli.js",
   "bin": {
     "workforest": "dist/cli.js",
@@ -11,6 +30,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
