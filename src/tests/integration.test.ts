@@ -87,6 +87,26 @@ describe('Workforest Integration Tests', () => {
     expect(state2.find((w: any) => w.path === wtPath).status).toBe('idle');
   });
 
+  it('should not discard commits when re-acquiring the same branch with --base', async () => {
+    const wtPath = runCli('acquire --branch persist-me', repoDir).stdout.trim();
+
+    execSync('touch keep.txt && git add keep.txt && git commit -m "must survive"', { cwd: wtPath });
+
+    const releaseResult = runCli(`release ${wtPath}`, repoDir);
+    expect(releaseResult.status).toBe(0);
+
+    // Reacquiring the same branch while also passing --base (e.g. an agent
+    // that always specifies a base defensively) must NOT force-reset the
+    // branch and wipe the commit made above.
+    const reacquireResult = runCli('acquire --branch persist-me --base main', repoDir);
+    expect(reacquireResult.status).toBe(0);
+    expect(reacquireResult.stdout.trim()).toBe(wtPath);
+
+    expect(fs.existsSync(path.join(wtPath, 'keep.txt'))).toBe(true);
+    const log = execSync('git log --oneline', { cwd: wtPath, encoding: 'utf-8' });
+    expect(log).toContain('must survive');
+  });
+
   it('should never track or remove the main worktree via prune/clean', async () => {
     const pruneResult = runCli('prune', repoDir);
     expect(pruneResult.status).toBe(0);

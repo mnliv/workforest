@@ -5,8 +5,10 @@
 ## Installation
 
 ```bash
-npm install -g workforest
+npm install -g @mnliv/workforest
 ```
+
+This installs both the `workforest` and `wf` binaries.
 
 ## Lifecycle
 
@@ -37,6 +39,12 @@ workforest acquire --branch feature/new-feature
 # Acquire and output full state as JSON
 workforest acquire --json
 ```
+
+`--base` only takes effect when a new branch is being created or an idle
+worktree is being switched onto a *different* branch than it's currently on.
+Reacquiring a worktree that's already on the requested branch never resets
+it, even if `--base` is also passed — this avoids silently discarding
+commits made on it since it was branched.
 
 ### `release`
 Marks a worktree as idle, making it available for reuse.
@@ -109,9 +117,13 @@ A `workforest.config.json` file in the main repository root:
 | 0 | Success |
 | 1 | General/Runtime Error |
 | 2 | Usage Error (bad args/missing required) |
-| 3 | Lock Acquisition Timeout |
+| 3 | Lock Acquisition Timeout (another workforest process is holding the state lock) |
 
 ## Windows Caveats
 - The tool uses Node.js's `fs.mkdirSync` for atomic locking, which works on Windows.
 - Git commands are executed using `spawnSync` for cross-platform compatibility.
 - Worktree paths should be handled carefully if they contain special characters.
+
+## License
+
+MIT © Minh Nhan

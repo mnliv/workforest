@@ -57,14 +57,21 @@ export async function acquireCommand(program: Command) {
           selectedWorktree.lastUsedAt = new Date().toISOString();
           selectedWorktree.task = task;
 
-          if (targetBranch || options.base) {
-            const branchToUse = targetBranch || selectedWorktree.branch;
+          // Only move the worktree onto a different branch when the caller
+          // explicitly asked for one that isn't what it's already on.
+          // `checkout -B` force-resets the branch to `baseBranch`, so running
+          // it on the worktree's own current branch (e.g. because `--base`
+          // was passed defensively alongside a matching `--branch`) would
+          // silently discard any commits made on it since it was branched.
+          if (targetBranch && targetBranch !== selectedWorktree.branch) {
             try {
-              runGit(['-C', selectedWorktree.path, 'checkout', '-B', branchToUse, baseBranch]);
-              selectedWorktree.branch = branchToUse;
+              runGit(['-C', selectedWorktree.path, 'checkout', '-B', targetBranch, baseBranch]);
+              selectedWorktree.branch = targetBranch;
             } catch (e: any) {
               throw new Error(`Failed to checkout branch in worktree: ${e.stderr || e.message}`);
             }
+          } else if (options.base) {
+            console.error(`Note: reusing worktree already on branch '${selectedWorktree.branch}'; --base ignored.`);
           }
         } else {
           // CREATE NEW

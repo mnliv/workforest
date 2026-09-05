@@ -1,6 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+/** Thrown when a lock can't be acquired within the timeout. Mapped to exit code 3 in cli.ts. */
+export class LockTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LockTimeoutError';
+  }
+}
+
 export async function withLock<T>(lockPath: string, action: () => Promise<T> | T): Promise<T> {
   const start = Date.now();
   const timeout = 5000;
@@ -53,5 +61,5 @@ export async function withLock<T>(lockPath: string, action: () => Promise<T> | T
     }
   }
 
-  throw new Error("Timeout acquiring lock");
+  throw new LockTimeoutError(`Timeout acquiring lock: ${lockPath}`);
 }

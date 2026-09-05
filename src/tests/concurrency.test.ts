@@ -56,4 +56,20 @@ describe('Concurrency and Stale Locks', () => {
     const result = runCli(['acquire', '--task', 'stale-task'], repoDir);
     expect(result.status).toBe(0);
   });
+
+  it('should exit with code 3 when a fresh (non-stale) lock is held for the full timeout', async () => {
+    const repoDir = createTempGitRepo();
+    const stateDir = path.join(repoDir, '.git', 'workforest');
+    const lockPath = path.join(stateDir, 'state.json.lock');
+
+    fs.mkdirSync(stateDir, { recursive: true });
+    // A freshly-created lock (mtime ~now) is never treated as stale, so the
+    // command below must block for the whole timeout and fail with the
+    // dedicated lock-timeout exit code documented in the README, not the
+    // generic runtime-error code.
+    fs.mkdirSync(lockPath);
+
+    const result = runCli(['acquire', '--task', 'blocked-task'], repoDir);
+    expect(result.status).toBe(3);
+  }, 10000);
 });
