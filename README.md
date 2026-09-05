@@ -96,7 +96,8 @@ left alone even with `--force` — git itself refuses the removal rather than
 silently discarding that work. After a worktree is removed, its branch is
 also deleted, but only if it's fully merged into its own base branch;
 otherwise the branch (and whatever commits are only reachable from it) is
-left alone.
+left alone — and reported: the output names any surviving branch, since
+"Cleaned up N worktrees" alone wouldn't tell you one didn't fully go away.
 ```bash
 # Preview what would be removed
 workforest clean --dry-run

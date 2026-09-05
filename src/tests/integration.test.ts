@@ -202,5 +202,12 @@ describe('Workforest Integration Tests', () => {
     const branches = execSync('git branch', { cwd: repoDir, encoding: 'utf-8' });
     expect(branches).not.toContain('branch-cleanup-merged');
     expect(branches).toContain('branch-cleanup-unmerged');
+
+    // The worktree is gone either way, so the output must call out that a
+    // branch survived — "Cleaned up N worktrees" alone would read as if
+    // nothing was left behind.
+    expect(result.stdout).toContain('branch-cleanup-unmerged');
+    expect(result.stdout).toMatch(/survived/i);
+    expect(result.stdout).not.toContain('branch-cleanup-merged');
   });
 });

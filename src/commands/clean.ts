@@ -31,6 +31,7 @@ export async function cleanCommand(program: Command) {
 
       let toRemove: { path: string; id: string; branch: string; baseBranch: string }[] = [];
       const removedIds = new Set<string>();
+      const survivingBranches: string[] = [];
       const mainWorktreePath = getMainWorktreePath();
 
       await runTransaction(async (state) => {
@@ -74,13 +75,20 @@ export async function cleanCommand(program: Command) {
               // Best-effort: delete the branch too, but only when it's
               // fully merged into its own baseBranch (an ancestor of it) —
               // never force-delete a branch that might hold commits not
-              // reachable anywhere else. Silently leave it otherwise.
+              // reachable anywhere else. When it survives, say so: the
+              // worktree is gone either way, so "Cleaned up N worktrees"
+              // alone would make it easy to assume the branch went with it.
               if (item.branch && item.branch !== item.baseBranch) {
+                let deleted = false;
                 try {
                   runGit(['merge-base', '--is-ancestor', item.branch, item.baseBranch]);
                   runGit(['branch', '-d', item.branch]);
+                  deleted = true;
                 } catch (e: any) {
                   // Not merged, doesn't exist, or in use elsewhere — leave it.
+                }
+                if (!deleted) {
+                  survivingBranches.push(item.branch);
                 }
               }
             } catch (e: any) {
@@ -99,6 +107,9 @@ export async function cleanCommand(program: Command) {
         toRemove.forEach(r => console.log(` - ${r.path}`));
       } else {
         console.log(`Cleaned up ${removedIds.size} worktrees.`);
+        if (survivingBranches.length > 0) {
+          console.log(`Note: ${survivingBranches.length} branch(es) survived (not fully merged into their base, or otherwise undeletable): ${survivingBranches.join(', ')}`);
+        }
       }
     });
 }
