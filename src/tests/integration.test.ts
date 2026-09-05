@@ -161,4 +161,46 @@ describe('Workforest Integration Tests', () => {
     const state = JSON.parse(stateResult.stdout);
     expect(state.some((w: any) => w.path === wtPath)).toBe(true);
   });
+
+  it('should scope acquire --json to the acquired worktree, not the whole state', async () => {
+    // Make sure at least one other worktree already exists in state, so a
+    // regression back to dumping the whole file would be caught.
+    runCli('acquire --task other-worktree', repoDir);
+
+    const result = runCli('acquire --task json-scope-check --json', repoDir);
+    expect(result.status).toBe(0);
+    const output = JSON.parse(result.stdout);
+
+    expect(Array.isArray(output)).toBe(false);
+    expect(output.task).toBe('json-scope-check');
+    expect(output).not.toHaveProperty('worktrees');
+  });
+
+  it('should report an invalid --older-than value as a clean usage error, not a stack trace', async () => {
+    const result = runCli('clean --force --older-than 0s', repoDir);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('Invalid duration format');
+    expect(result.stderr).not.toContain(' at '); // no stack trace frames
+  });
+
+  it('should delete a fully-merged branch on clean but keep one with unmerged commits', async () => {
+    // Use --branch explicitly, and acquire both before releasing either, so
+    // two distinct worktrees/branches exist at once — releasing the first
+    // before acquiring the second would let the second acquire reuse and
+    // repurpose that same worktree onto its own branch instead of creating
+    // a new one, leaving only one entry for clean to ever see.
+    const mergedPath = runCli('acquire --branch branch-cleanup-merged', repoDir).stdout.trim();
+    const unmergedPath = runCli('acquire --branch branch-cleanup-unmerged', repoDir).stdout.trim();
+    execSync('touch unique.txt && git add unique.txt && git commit -m "unique work"', { cwd: unmergedPath });
+
+    runCli(`release ${mergedPath}`, repoDir); // no commits made: fully merged into base
+    runCli(`release ${unmergedPath}`, repoDir);
+
+    const result = runCli('clean --force', repoDir);
+    expect(result.status).toBe(0);
+
+    const branches = execSync('git branch', { cwd: repoDir, encoding: 'utf-8' });
+    expect(branches).not.toContain('branch-cleanup-merged');
+    expect(branches).toContain('branch-cleanup-unmerged');
+  });
 });

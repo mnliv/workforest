@@ -21,10 +21,15 @@ export async function cleanCommand(program: Command) {
 
       let thresholdMs = 0;
       if (options.olderThan) {
-        thresholdMs = parseDuration(options.olderThan);
+        try {
+          thresholdMs = parseDuration(options.olderThan);
+        } catch (e: any) {
+          console.error(`Error: ${e.message}`);
+          process.exit(2);
+        }
       }
 
-      let toRemove: { path: string; id: string }[] = [];
+      let toRemove: { path: string; id: string; branch: string; baseBranch: string }[] = [];
       const removedIds = new Set<string>();
       const mainWorktreePath = getMainWorktreePath();
 
@@ -51,7 +56,7 @@ export async function cleanCommand(program: Command) {
           }
 
           if (shouldRemove) {
-            toRemove.push({ path: w.path, id: w.id });
+            toRemove.push({ path: w.path, id: w.id, branch: w.branch, baseBranch: w.baseBranch });
           }
         }
 
@@ -65,6 +70,19 @@ export async function cleanCommand(program: Command) {
               runGit(['worktree', 'remove', item.path]);
               runGit(['worktree', 'prune']);
               removedIds.add(item.id);
+
+              // Best-effort: delete the branch too, but only when it's
+              // fully merged into its own baseBranch (an ancestor of it) —
+              // never force-delete a branch that might hold commits not
+              // reachable anywhere else. Silently leave it otherwise.
+              if (item.branch && item.branch !== item.baseBranch) {
+                try {
+                  runGit(['merge-base', '--is-ancestor', item.branch, item.baseBranch]);
+                  runGit(['branch', '-d', item.branch]);
+                } catch (e: any) {
+                  // Not merged, doesn't exist, or in use elsewhere — leave it.
+                }
+              }
             } catch (e: any) {
               console.error(`Failed to remove worktree ${item.path}: ${e.stderr || e.message}`);
             }

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { runGit, getRepoRoot } from '../utils/git';
-import { runTransaction, readState } from '../core/state';
+import { runTransaction } from '../core/state';
 import { loadConfig } from '../core/config';
 import { WorktreeState, WorkforestState } from '../types';
 
@@ -15,7 +15,7 @@ export async function acquireCommand(program: Command) {
     .option('--branch <name>', 'Desired branch name')
     .option('--base <branch>', 'Base branch to checkout from')
     .option('--owner <id>', 'Owner ID')
-    .option('--json', 'Output full state record as JSON')
+    .option('--json', 'Output the acquired worktree\'s record as JSON')
     .action(async (options) => {
       const config = loadConfig();
       const owner = options.owner || process.env.WORKFOREST_OWNER || uuidv4().substring(0, 8);
@@ -25,6 +25,7 @@ export async function acquireCommand(program: Command) {
 
       let worktreeId: string | null = null;
       let worktreePath: string | null = null;
+      let acquiredWorktree: WorktreeState | null = null;
       let isNew = false;
 
       await runTransaction(async (state) => {
@@ -109,12 +110,16 @@ export async function acquireCommand(program: Command) {
         if (selectedWorktree) {
           worktreeId = selectedWorktree.id;
           worktreePath = selectedWorktree.path;
+          // Snapshot the record now, inside the lock, rather than re-reading
+          // state afterward — avoids racing a concurrent acquire/release and
+          // avoids leaking every other tracked worktree's owner/task/pid to
+          // a caller who only asked about the one it just acquired.
+          acquiredWorktree = { ...selectedWorktree };
         }
       });
 
       if (options.json) {
-        const fullState = await readState();
-        console.log(JSON.stringify(fullState, null, 2));
+        console.log(JSON.stringify(acquiredWorktree, null, 2));
       } else if (worktreePath) {
         console.log(worktreePath);
       } else {
