@@ -49,7 +49,7 @@ workforest acquire --task my-task
 # Acquire a worktree on a specific branch
 workforest acquire --branch feature/new-feature
 
-# Acquire and output full state as JSON
+# Acquire and output the acquired worktree's record as JSON
 workforest acquire --json
 ```
 
@@ -93,7 +93,10 @@ Removes worktrees. `--force` is required to actually remove anything (bare
 `workforest clean` refuses and does nothing); `--dry-run` previews without
 needing `--force`. A worktree with real uncommitted or untracked changes is
 left alone even with `--force` — git itself refuses the removal rather than
-silently discarding that work.
+silently discarding that work. After a worktree is removed, its branch is
+also deleted, but only if it's fully merged into its own base branch;
+otherwise the branch (and whatever commits are only reachable from it) is
+left alone.
 ```bash
 # Preview what would be removed
 workforest clean --dry-run
