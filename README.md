@@ -10,6 +10,19 @@ npm install -g @mnliv/workforest
 
 This installs both the `workforest` and `wf` binaries.
 
+## Using with a Coding Agent
+
+For an agent (e.g. Claude Code) to manage worktrees with `workforest` on
+your behalf — acquiring, releasing, and cleaning them up as it works,
+without you running any of the commands below by hand — add the
+companion skill to it:
+
+**[workforest-skill](https://github.com/mnliv/workforest-skill)**
+
+Once added, the agent checks whether `workforest`/`wf` is installed and
+installs it itself if not, so you don't need to run the `npm install`
+step above manually — just add the skill and let the agent do the rest.
+
 ## Lifecycle
 
 The typical lifecycle of a worktree is:
