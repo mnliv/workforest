@@ -3,12 +3,16 @@ import { Command } from 'commander';
 import { registerAllCommands } from './commands';
 import { LockTimeoutError } from './utils/lock';
 
+// Read the version from package.json at runtime rather than hardcoding it
+// a second time here, where it would inevitably drift out of sync.
+const pkg = require('../package.json');
+
 const program = new Command();
 
 program
   .name('workforest')
   .description('Manage reusable git worktrees for parallel coding sessions')
-  .version('1.0.0');
+  .version(pkg.version);
 
 registerAllCommands(program);
 
