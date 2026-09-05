@@ -86,4 +86,21 @@ describe('Workforest Integration Tests', () => {
     const state2 = JSON.parse(stateResult2.stdout);
     expect(state2.find((w: any) => w.path === wtPath).status).toBe('idle');
   });
+
+  it('should never track or remove the main worktree via prune/clean', async () => {
+    const pruneResult = runCli('prune', repoDir);
+    expect(pruneResult.status).toBe(0);
+
+    const stateResult = runCli('list --json', repoDir);
+    const state = JSON.parse(stateResult.stdout);
+    expect(state.some((w: any) => path.resolve(w.path) === path.resolve(repoDir))).toBe(false);
+
+    const cleanResult = runCli('clean --all --force --dry-run', repoDir);
+    expect(cleanResult.status).toBe(0);
+    const mainRepoLine = `- ${fs.realpathSync(repoDir)}`;
+    expect(cleanResult.stdout.split('\n').map((l: string) => l.trim())).not.toContain(mainRepoLine);
+
+    // The main checkout must still be intact and usable.
+    expect(fs.existsSync(path.join(repoDir, '.git'))).toBe(true);
+  });
 });

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { runTransaction, readState } from '../core/state';
-import { runGit } from '../utils/git';
+import { runGit, getMainWorktreePath } from '../utils/git';
 import * as fs from 'fs';
 import * as path from 'path';
 import { loadConfig } from '../core/config';
@@ -11,11 +11,12 @@ export async function pruneCommand(program: Command) {
     .description('Reconcile state with actual git worktrees')
     .action(async () => {
       const config = loadConfig();
+      const mainWorktreePath = getMainWorktreePath();
       await runTransaction(async (state) => {
         // 1. Get actual git worktrees via porcelain
         const result = runGit(['worktree', 'list', '--porcelain']);
         const lines = result.stdout!.split('\n');
-        
+
         const actualWorktreePaths = new Set<string>();
         let currentPath: string | null = null;
 
@@ -26,13 +27,15 @@ export async function pruneCommand(program: Command) {
           }
         }
 
-        // 2. Remove state entries for worktrees that don't exist
-        state.worktrees = state.worktrees.filter(w => actualWorktreePaths.has(w.path));
+        // 2. Remove state entries for worktrees that don't exist, and never
+        // track the main worktree (the primary checkout) as a managed one.
+        state.worktrees = state.worktrees.filter(w => actualWorktreePaths.has(w.path) && w.path !== mainWorktreePath);
 
         // 3. Add missing worktrees from git as idle
         // Note: We don't know their branch from porcelain easily without more parsing
         // but we can try to get it.
         for (const worktreePath of actualWorktreePaths) {
+          if (worktreePath === mainWorktreePath) continue;
           const isAlreadyInState = state.worktrees.some(w => w.path === worktreePath);
           if (!isAlreadyInState) {
             // Try to get branch from git

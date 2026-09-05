@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { runTransaction, readState } from '../core/state';
-import { runGit } from '../utils/git';
+import { runGit, getMainWorktreePath } from '../utils/git';
 import * as path from 'path';
 import * as fs from 'fs';
 import { parseDuration } from '../utils/duration';
@@ -25,10 +25,16 @@ export async function cleanCommand(program: Command) {
       }
 
       let toRemove: { path: string; id: string }[] = [];
+      const removedIds = new Set<string>();
+      const mainWorktreePath = getMainWorktreePath();
 
       await runTransaction(async (state) => {
         const now = Date.now();
         for (const w of state.worktrees) {
+          // Never remove the main (primary) checkout, no matter its tracked
+          // status or --all/--force, in case it was ever imported by mistake.
+          if (w.path === mainWorktreePath) continue;
+
           let shouldRemove = false;
 
           if (options.all) {
@@ -55,14 +61,15 @@ export async function cleanCommand(program: Command) {
             try {
               runGit(['worktree', 'remove', '--force', item.path]);
               runGit(['worktree', 'prune']);
+              removedIds.add(item.id);
             } catch (e: any) {
               console.error(`Failed to remove worktree ${item.path}: ${e.stderr || e.message}`);
             }
           }
-          
-          // Remove from state
-          const remainingWorktrees = state.worktrees.filter(w => !toRemove.some(r => r.id === w.id));
-          state.worktrees = remainingWorktrees;
+
+          // Only drop entries from state that were actually removed on disk,
+          // so a failed `git worktree remove` doesn't silently lose tracking.
+          state.worktrees = state.worktrees.filter(w => !removedIds.has(w.id));
         }
       });
 
@@ -70,7 +77,7 @@ export async function cleanCommand(program: Command) {
         console.log('Dry run: would remove the following worktrees:');
         toRemove.forEach(r => console.log(` - ${r.path}`));
       } else {
-        console.log(`Cleaned up ${toRemove.length} worktrees.`);
+        console.log(`Cleaned up ${removedIds.size} worktrees.`);
       }
     });
 }
