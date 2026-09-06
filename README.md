@@ -14,14 +14,26 @@ This installs both the `workforest` and `wf` binaries.
 
 For an agent (e.g. Claude Code) to manage worktrees with `workforest` on
 your behalf — acquiring, releasing, and cleaning them up as it works,
-without you running any of the commands below by hand — add the
-companion skill to it:
+without you running any of the commands below by hand — install the
+bundled skill:
 
-**[workforest-skill](https://github.com/mnliv/workforest-skill)**
+```bash
+workforest skill install --provider claude
+```
 
-Once added, the agent checks whether `workforest`/`wf` is installed and
-installs it itself if not, so you don't need to run the `npm install`
-step above manually — just add the skill and let the agent do the rest.
+`--provider claude` is currently the default and only supported provider;
+pass it explicitly so this keeps working unchanged if others are added
+later. This installs to `~/.claude/skills/workforest` by default (pass
+`--target <dir>` for a project-scoped install instead); see
+[workforest-skill](https://github.com/mnliv/workforest-skill) for what the
+skill actually does and its content's source of truth.
+
+Because the skill content ships bundled inside this package, updating the
+CLI (`npm update -g @mnliv/workforest`) is what makes newer skill content
+available — re-running `skill install` (a no-op if already current) syncs
+your local copy to it. The skill's own setup step does this automatically
+every time it's used, so you shouldn't need to think about this after the
+first install.
 
 ## Lifecycle
 
@@ -117,6 +129,19 @@ Reconciles the state with the actual git worktrees on disk. Removes entries from
 ```bash
 workforest prune
 ```
+
+### `skill install`
+Installs (or resyncs) the agent skill bundled inside this package, so a
+coding agent can drive `workforest` itself. See
+[Using with a Coding Agent](#using-with-a-coding-agent) above.
+```bash
+workforest skill install --provider claude
+workforest skill install --provider claude --target ./.claude/skills/workforest
+workforest skill install --provider claude --force
+```
+`--provider` currently only accepts `claude` (the default); any other value
+is a usage error. Safe to run repeatedly — it's a no-op once the installed
+copy already matches the running CLI's version.
 
 ## Configuration
 

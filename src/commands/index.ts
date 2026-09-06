@@ -6,6 +6,7 @@ import { listCommand } from './list';
 import { statusCommand } from './status';
 import { cleanCommand } from './clean';
 import { pruneCommand } from './prune';
+import { skillCommand } from './skill';
 
 export function registerAllCommands(program: Command) {
   initCommand(program);
@@ -15,4 +16,5 @@ export function registerAllCommands(program: Command) {
   statusCommand(program);
   cleanCommand(program);
   pruneCommand(program);
+  skillCommand(program);
 }
