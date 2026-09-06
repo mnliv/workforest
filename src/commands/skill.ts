@@ -18,9 +18,10 @@ const PROVIDER_DEFAULT_TARGETS: Record<string, () => string> = {
 };
 
 /**
- * The skill content bundled inside this npm package (see
- * scripts/sync-skill.sh, which vendors it from the workforest-skill repo
- * before a release). Resolved relative to the compiled dist/ location.
+ * The skill content bundled inside this npm package, edited directly at
+ * skill/workforest/ in this repo (not a separate one) so it's always
+ * version-consistent with the CLI it ships with. Resolved relative to the
+ * compiled dist/ location.
  */
 function getBundledSkillDir(): string {
   return path.resolve(__dirname, '../../skill/workforest');
@@ -62,10 +63,10 @@ export async function skillCommand(program: Command) {
         }
       }
 
-      // If the target is a symlink (e.g. someone set it up pointing at a
-      // workforest-skill git clone, per the alternative install method),
-      // remove only the symlink itself — never recurse into whatever it
-      // points to, so we don't accidentally wipe their clone.
+      // If the target is a symlink (e.g. someone manually pointed it at a
+      // clone of this repo, or a development checkout, instead of using
+      // this command), remove only the symlink itself — never recurse into
+      // whatever it points to, so we don't accidentally wipe their content.
       try {
         const lst = fs.lstatSync(target);
         if (lst.isSymbolicLink()) {

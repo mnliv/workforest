@@ -25,8 +25,8 @@ workforest skill install --provider claude
 pass it explicitly so this keeps working unchanged if others are added
 later. This installs to `~/.claude/skills/workforest` by default (pass
 `--target <dir>` for a project-scoped install instead); see
-[workforest-skill](https://github.com/mnliv/workforest-skill) for what the
-skill actually does and its content's source of truth.
+[`skill/workforest/SKILL.md`](skill/workforest/SKILL.md) in this repo for
+what the skill actually tells the agent to do.
 
 Because the skill content ships bundled inside this package, updating the
 CLI (`npm update -g @mnliv/workforest`) is what makes newer skill content

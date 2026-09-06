@@ -30,12 +30,20 @@ A few things that'll make review faster:
   `Command` handlers per file, `runGit`/`runTransaction` for state and git
   access, exit code 2 for usage errors, exit code 3 reserved for lock
   timeouts).
-- If you're changing something that's also described in the
-  [`workforest-skill`](https://github.com/mnliv/workforest-skill) repo's
-  `SKILL.md` (the CLI's own agent-facing docs), flag that in the PR — the
-  two repos are meant to stay in sync, and a behavior change without a
-  matching doc update is worse than no change at all, since it leaves an
-  agent following stale guidance.
+- If you're changing command behavior, update
+  [`skill/workforest/SKILL.md`](skill/workforest/SKILL.md) in the same PR if
+  it describes that behavior — it's the CLI's own agent-facing docs, bundled
+  into the published package and installed via `workforest skill install`.
+  A behavior change without a matching doc update is worse than no change
+  at all, since it leaves an agent following stale guidance. `SKILL.md`
+  matters more than most docs here because an agent acts on it directly —
+  verify any claim you add against the real, installed CLI, not against
+  memory of how a command used to behave; several past corrections here
+  existed only because someone actually tested a claim and found it no
+  longer held. Anything only needed occasionally (a one-time setup step, a
+  detailed troubleshooting path) belongs under `skill/workforest/references/`
+  instead, not in `SKILL.md` itself, since `SKILL.md` loads into context on
+  every single invocation of the skill.
 - Never make `clean`, `release`, or `prune` more permissive by default
   without a very good reason — several past bugs in this project were
   exactly that kind of destructive-by-default behavior (see the commit
