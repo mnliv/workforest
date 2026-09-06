@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -12,20 +12,21 @@ export function createTempGitRepo(): string {
   return repoDir;
 }
 
-export function runCli(args: string | string[], cwd: string) {
+export function runCli(args: string | string[], cwd: string, env?: NodeJS.ProcessEnv) {
   // Get absolute path to cli.js relative to this file
   const cliPath = path.resolve(path.join(__dirname, '../../dist/cli.js'));
-  const argsString = Array.isArray(args) ? args.join(' ') : args;
-  const cmd = `node "${cliPath}" ${argsString}`;
-  try {
-    const stdout = execSync(cmd, { cwd: cwd, encoding: 'utf-8' });
-    return { stdout, error: null, status: 0 };
-  } catch (e: any) {
-    return {
-      stdout: e.stdout,
-      stderr: e.stderr,
-      error: e,
-      status: e.status,
-    };
-  }
+  const argv = Array.isArray(args) ? args : args.split(' ').filter(Boolean);
+  // spawnSync (rather than execSync) so stderr is captured consistently
+  // whether the command succeeds or fails, not only on a thrown error.
+  const result = spawnSync('node', [cliPath, ...argv], {
+    cwd,
+    encoding: 'utf-8',
+    env: env ? { ...process.env, ...env } : process.env,
+  });
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    error: result.error || null,
+    status: result.status,
+  };
 }

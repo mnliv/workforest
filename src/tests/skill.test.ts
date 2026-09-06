@@ -78,3 +78,50 @@ describe('workforest skill install', () => {
     fs.rmSync(path.dirname(symlinkTarget), { recursive: true, force: true });
   });
 });
+
+describe('passive skill staleness notice', () => {
+  let repoDir: string;
+  let fakeHome: string;
+
+  beforeAll(() => {
+    repoDir = createTempGitRepo();
+    fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'workforest-fake-home-'));
+  });
+
+  afterAll(() => {
+    fs.rmSync(fakeHome, { recursive: true, force: true });
+  });
+
+  const defaultTarget = () => path.join(fakeHome, '.claude', 'skills', 'workforest');
+
+  it('says nothing when the skill was never installed', () => {
+    const result = runCli('init --force', repoDir, { HOME: fakeHome });
+    expect(result.status).toBe(0);
+    expect(result.stderr || '').not.toContain('workforest skill installed');
+  });
+
+  it('warns on an unrelated command when the installed skill is behind the running CLI', () => {
+    runCli('skill install --provider claude', repoDir, { HOME: fakeHome });
+    fs.writeFileSync(path.join(defaultTarget(), '.workforest-cli-version'), '0.0.1\n');
+
+    const result = runCli('init --force', repoDir, { HOME: fakeHome });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain(defaultTarget());
+    expect(result.stderr).toContain('v0.0.1');
+    expect(result.stderr).toContain('workforest skill install --provider claude');
+  });
+
+  it('does not show the notice during `skill install` itself', () => {
+    // Stamp is still stale from the previous test at this point.
+    const result = runCli('skill install --provider claude', repoDir, { HOME: fakeHome });
+    expect(result.status).toBe(0);
+    expect(result.stdout).not.toContain('is behind this CLI');
+    expect(result.stderr || '').not.toContain('is behind this CLI');
+  });
+
+  it('says nothing once resynced', () => {
+    const result = runCli('init --force', repoDir, { HOME: fakeHome });
+    expect(result.status).toBe(0);
+    expect(result.stderr || '').not.toContain('is behind this CLI');
+  });
+});

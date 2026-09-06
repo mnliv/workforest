@@ -33,7 +33,11 @@ CLI (`npm update -g @mnliv/workforest`) is what makes newer skill content
 available — re-running `skill install` (a no-op if already current) syncs
 your local copy to it. The skill's own setup step does this automatically
 every time it's used, so you shouldn't need to think about this after the
-first install.
+first install. As a backstop, any `workforest` command also checks whether
+an installed skill (at its default location, or a project-scoped one in the
+current directory) has fallen behind the running CLI's version, and prints
+a one-line reminder to stderr if so — so it's still caught even if the
+skill itself is never invoked again after an update.
 
 ## Lifecycle
 

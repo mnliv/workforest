@@ -85,3 +85,39 @@ export async function skillCommand(program: Command) {
       console.log(`Installed workforest skill (v${pkg.version}) for ${provider} to ${target}.`);
     });
 }
+
+/**
+ * Best-effort passive staleness check, run after any non-`skill` command
+ * (see cli.ts). Covers the one real gap in the self-heal design: a skill
+ * copy installed before this resync mechanism existed (or via the old
+ * manual git-clone method) has no instruction inside it telling it to ever
+ * check again — so without this, that copy could go stale indefinitely,
+ * only ever fixed by a user or agent thinking to manually re-run `skill
+ * install`. This makes just using the CLI at all the trigger instead.
+ *
+ * Only checks well-known install locations (the default per-provider
+ * target, plus a project-scoped one relative to cwd) — a custom --target
+ * elsewhere isn't discoverable and isn't checked. Never throws: this must
+ * never interfere with the actual command that was run.
+ */
+export function checkSkillStaleness(): void {
+  try {
+    const candidates = new Set<string>();
+    for (const getDefault of Object.values(PROVIDER_DEFAULT_TARGETS)) {
+      candidates.add(getDefault());
+    }
+    candidates.add(path.join(process.cwd(), '.claude', 'skills', 'workforest'));
+
+    for (const target of candidates) {
+      const stampPath = path.join(target, VERSION_STAMP_FILE);
+      if (!fs.existsSync(stampPath)) continue;
+
+      const installedVersion = fs.readFileSync(stampPath, 'utf-8').trim();
+      if (installedVersion && installedVersion !== pkg.version) {
+        console.error(`Note: the workforest skill installed at ${target} (v${installedVersion}) is behind this CLI (v${pkg.version}). Run \`workforest skill install --provider claude\` to update it.`);
+      }
+    }
+  } catch (e) {
+    // Best-effort only.
+  }
+}

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { registerAllCommands } from './commands';
 import { LockTimeoutError } from './utils/lock';
+import { checkSkillStaleness } from './commands/skill';
 
 // Read the version from package.json at runtime rather than hardcoding it
 // a second time here, where it would inevitably drift out of sync.
@@ -16,7 +17,13 @@ program
 
 registerAllCommands(program);
 
-program.parseAsync(process.argv).catch((err) => {
+program.parseAsync(process.argv).then(() => {
+  // Skip on `skill` subcommands themselves to avoid a redundant/circular
+  // notice right after install/resync just changed the stamp.
+  if (process.argv[2] !== 'skill') {
+    checkSkillStaleness();
+  }
+}).catch((err) => {
   if (err instanceof LockTimeoutError) {
     console.error(`Error: ${err.message}`);
     process.exit(3);
